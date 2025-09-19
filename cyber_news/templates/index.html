@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Cyber News Tracker{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1><i class="fas fa-newspaper"></i> Latest Cybersecurity News</h1>
+            <div>
+                <a href="{{ url_for('search') }}" class="btn btn-outline-primary">
+                    <i class="fas fa-search"></i> Advanced Search
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- News Categories -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Quick Categories</h5>
+                <div class="btn-group" role="group" aria-label="News categories">
+                    <button type="button" class="btn btn-outline-secondary" onclick="filterByCategory('all')">All News</button>
+                    <button type="button" class="btn btn-outline-danger" onclick="filterByCategory('Data Breach')">Data Breaches</button>
+                    <button type="button" class="btn btn-outline-warning" onclick="filterByCategory('Malware')">Malware</button>
+                    <button type="button" class="btn btn-outline-info" onclick="filterByCategory('Vulnerability')">Vulnerabilities</button>
+                    <button type="button" class="btn btn-outline-dark" onclick="filterByCategory('Cyber Attack')">Cyber Attacks</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- News Articles -->
+<div class="row" id="news-container">
+    {% if articles %}
+        {% for article in articles %}
+        <div class="col-lg-6 col-xl-4 mb-4 news-article" data-category="{{ article.category }}">
+            <div class="card h-100 shadow-sm">
+                {% if article.urlToImage %}
+                <img src="{{ article.urlToImage }}" class="card-img-top" alt="Article image" style="height: 200px; object-fit: cover;">
+                {% else %}
+                <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                    <i class="fas fa-newspaper fa-3x text-muted"></i>
+                </div>
+                {% endif %}
+                
+                <div class="card-body d-flex flex-column">
+                    <div class="mb-2">
+                        <span class="badge bg-{{ 'danger' if article.category == 'Data Breach' else 'warning' if article.category == 'Malware' else 'info' if article.category == 'Vulnerability' else 'dark' if article.category == 'Cyber Attack' else 'secondary' }}">
+                            {{ article.category }}
+                        </span>
+                    </div>
+                    
+                    <h5 class="card-title">{{ article.title }}</h5>
+                    
+                    {% if article.description %}
+                    <p class="card-text flex-grow-1">{{ article.description[:150] }}{% if article.description|length > 150 %}...{% endif %}</p>
+                    {% endif %}
+                    
+                    <div class="mt-auto">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <small class="text-muted">
+                                <i class="fas fa-clock"></i> {{ article.publishedAt }}
+                            </small>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">
+                                <i class="fas fa-external-link-alt"></i> {{ article.source }}
+                            </small>
+                            {% if article.url != '#' %}
+                            <a href="{{ article.url }}" target="_blank" class="btn btn-primary btn-sm">
+                                Read More <i class="fas fa-arrow-right"></i>
+                            </a>
+                            {% else %}
+                            <span class="badge bg-secondary">Sample Article</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="col-12">
+            <div class="alert alert-info text-center" role="alert">
+                <i class="fas fa-info-circle fa-2x mb-3"></i>
+                <h4>No News Articles Available</h4>
+                <p>Unable to fetch cybersecurity news at the moment. This might be due to API configuration or connectivity issues.</p>
+                <p class="mb-0">Please check your NewsAPI configuration in the admin panel or try again later.</p>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Loading indicator -->
+<div id="loading" class="text-center d-none">
+    <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function filterByCategory(category) {
+    const articles = document.querySelectorAll('.news-article');
+    const buttons = document.querySelectorAll('.btn-group .btn');
+    
+    // Reset button states
+    buttons.forEach(btn => btn.classList.remove('active'));
+    
+    // Set active button
+    event.target.classList.add('active');
+    
+    // Show/hide articles
+    articles.forEach(article => {
+        if (category === 'all' || article.dataset.category === category) {
+            article.style.display = 'block';
+        } else {
+            article.style.display = 'none';
+        }
+    });
+}
+
+// Auto-refresh news every 5 minutes
+setInterval(() => {
+    location.reload();
+}, 300000);
+</script>
+{% endblock %}
