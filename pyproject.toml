@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "cyber-news-2025"
+version = "1.0.0"
+description = "A Flask web application for tracking cybersecurity news"
+author = "Cyber News Team"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+Flask = "^3.0.0"
+requests = "^2.31.0"
+python-dotenv = "^1.0.0"
+beautifulsoup4 = "^4.12.2"
+Flask-Login = "^0.6.3"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
