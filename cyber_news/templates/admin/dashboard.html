@@ -1,0 +1,223 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - Cyber News Tracker{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1><i class="fas fa-tachometer-alt"></i> Admin Dashboard</h1>
+            <div>
+                <span class="badge bg-success">
+                    <i class="fas fa-user"></i> {{ session.admin_username }}
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4>{{ stats.total_sources or 0 }}</h4>
+                        <p class="mb-0">News Sources</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-rss fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4>{{ stats.recent_articles or 0 }}</h4>
+                        <p class="mb-0">Recent Articles</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-newspaper fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card {{ 'bg-success' if stats.api_status == 'Connected' else 'bg-danger' }} text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4>{{ stats.api_status or 'Unknown' }}</h4>
+                        <p class="mb-0">API Status</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-{{ 'check-circle' if stats.api_status == 'Connected' else 'exclamation-triangle' }} fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Admin Controls -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-cogs"></i> Admin Controls</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>News Management</h6>
+                        <div class="list-group">
+                            <button class="list-group-item list-group-item-action" onclick="refreshNews()">
+                                <i class="fas fa-sync-alt"></i> Refresh News Feed
+                            </button>
+                            <button class="list-group-item list-group-item-action" onclick="testApiConnection()">
+                                <i class="fas fa-plug"></i> Test API Connection
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <h6>System Settings</h6>
+                        <div class="list-group">
+                            <button class="list-group-item list-group-item-action" onclick="showApiConfig()">
+                                <i class="fas fa-key"></i> API Configuration
+                            </button>
+                            <button class="list-group-item list-group-item-action" onclick="showKeywords()">
+                                <i class="fas fa-tags"></i> Manage Keywords
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Articles Preview -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-newspaper"></i> Recent Articles Preview</h5>
+            </div>
+            <div class="card-body">
+                {% if recent_articles %}
+                    {% for article in recent_articles %}
+                    <div class="row border-bottom py-2">
+                        <div class="col-md-8">
+                            <h6 class="mb-1">{{ article.title }}</h6>
+                            <small class="text-muted">{{ article.source }} • {{ article.publishedAt }}</small>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <span class="badge bg-{{ 'danger' if article.category == 'Data Breach' else 'warning' if article.category == 'Malware' else 'info' if article.category == 'Vulnerability' else 'dark' if article.category == 'Cyber Attack' else 'secondary' }}">
+                                {{ article.category }}
+                            </span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-muted mb-0">No recent articles available</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modals -->
+<div class="modal fade" id="apiConfigModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">API Configuration</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i>
+                    <strong>NewsAPI Setup:</strong>
+                    <ol class="mb-0 mt-2">
+                        <li>Visit <a href="https://newsapi.org/" target="_blank">newsapi.org</a> and create a free account</li>
+                        <li>Get your API key from the dashboard</li>
+                        <li>Add it to your .env file as NEWSAPI_KEY=your_key_here</li>
+                        <li>Restart the application</li>
+                    </ol>
+                </div>
+                <p>Current API Status: <span class="badge bg-{{ 'success' if stats.api_status == 'Connected' else 'danger' }}">{{ stats.api_status or 'Unknown' }}</span></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="keywordsModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Manage Keywords</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Current cybersecurity keywords being tracked:</p>
+                <div class="d-flex flex-wrap gap-2">
+                    <span class="badge bg-primary">cybersecurity</span>
+                    <span class="badge bg-primary">cyber attack</span>
+                    <span class="badge bg-primary">data breach</span>
+                    <span class="badge bg-primary">malware</span>
+                    <span class="badge bg-primary">ransomware</span>
+                    <span class="badge bg-primary">phishing</span>
+                    <span class="badge bg-primary">hacking</span>
+                    <span class="badge bg-primary">vulnerability</span>
+                    <span class="badge bg-primary">zero-day</span>
+                    <span class="badge bg-primary">DDoS</span>
+                </div>
+                <p class="mt-3 mb-0"><small class="text-muted">Keywords can be customized in the news service configuration.</small></p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function refreshNews() {
+    alert('News refresh initiated. The system will fetch the latest articles.');
+    location.reload();
+}
+
+function testApiConnection() {
+    fetch('/api/news')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('API connection successful!');
+            } else {
+                alert('API connection failed: ' + data.error);
+            }
+        })
+        .catch(error => {
+            alert('API test failed: ' + error.message);
+        });
+}
+
+function showApiConfig() {
+    const modal = new bootstrap.Modal(document.getElementById('apiConfigModal'));
+    modal.show();
+}
+
+function showKeywords() {
+    const modal = new bootstrap.Modal(document.getElementById('keywordsModal'));
+    modal.show();
+}
+</script>
+{% endblock %}
