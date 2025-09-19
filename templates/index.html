@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+
+{% block title %}Cybersecurity News - Cyber News 2025{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h2">
+                <i class="fas fa-newspaper text-primary"></i>
+                Latest Cybersecurity News
+            </h1>
+            <div class="dropdown">
+                <button class="btn btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                    <i class="fas fa-filter"></i> Topic: {{ current_topic.title() }}
+                </button>
+                <ul class="dropdown-menu">
+                    {% for topic in topics %}
+                    <li>
+                        <a class="dropdown-item" href="{{ url_for('index', topic=topic) }}">
+                            {{ topic.title() }}
+                        </a>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    {% if articles %}
+        {% for article in articles %}
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="card h-100 shadow-sm">
+                {% if article.urlToImage %}
+                <img src="{{ article.urlToImage }}" class="card-img-top" alt="Article image" style="height: 200px; object-fit: cover;">
+                {% else %}
+                <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                    <i class="fas fa-image fa-3x text-muted"></i>
+                </div>
+                {% endif %}
+                
+                <div class="card-body d-flex flex-column">
+                    <h5 class="card-title">{{ article.title[:100] }}{% if article.title|length > 100 %}...{% endif %}</h5>
+                    
+                    <p class="card-text text-muted small mb-2">
+                        <i class="fas fa-calendar"></i> {{ article.formatted_date }}
+                        {% if article.source and article.source.name %}
+                        | <i class="fas fa-building"></i> {{ article.source.name }}
+                        {% endif %}
+                    </p>
+                    
+                    {% if article.description %}
+                    <p class="card-text flex-grow-1">
+                        {{ article.description[:150] }}{% if article.description|length > 150 %}...{% endif %}
+                    </p>
+                    {% endif %}
+                    
+                    <div class="mt-auto">
+                        <a href="{{ article.url }}" target="_blank" class="btn btn-primary btn-sm">
+                            <i class="fas fa-external-link-alt"></i> Read Full Article
+                        </a>
+                        <button class="btn btn-outline-secondary btn-sm ms-2" onclick="bookmarkArticle('{{ article.url }}', '{{ article.title }}')">
+                            <i class="fas fa-bookmark"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="col-12">
+            <div class="alert alert-info text-center" role="alert">
+                <h4 class="alert-heading">
+                    <i class="fas fa-info-circle"></i> No Articles Found
+                </h4>
+                <p>We couldn't find any articles for the topic "{{ current_topic }}". Try selecting a different topic or check back later.</p>
+                <hr>
+                <p class="mb-0">
+                    <small>Note: This app uses NewsAPI. Make sure to set your API key in the environment variables for live data.</small>
+                </p>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card bg-light">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-info-circle"></i> About This App
+                </h5>
+                <p class="card-text">
+                    This cybersecurity news aggregator fetches the latest articles from various sources using the NewsAPI. 
+                    Stay updated with the latest security threats, data breaches, and technology news.
+                </p>
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><i class="fas fa-check text-success"></i> Real-time news updates</p>
+                        <p><i class="fas fa-check text-success"></i> Multiple topic categories</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><i class="fas fa-check text-success"></i> Clean, responsive design</p>
+                        <p><i class="fas fa-check text-success"></i> Admin configuration panel</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function bookmarkArticle(url, title) {
+    // Simple bookmark functionality
+    const bookmarks = JSON.parse(localStorage.getItem('bookmarks') || '[]');
+    const bookmark = { url: url, title: title, date: new Date().toISOString() };
+    
+    if (!bookmarks.find(b => b.url === url)) {
+        bookmarks.push(bookmark);
+        localStorage.setItem('bookmarks', JSON.stringify(bookmarks));
+        
+        // Show success message
+        const toast = document.createElement('div');
+        toast.className = 'alert alert-success alert-dismissible fade show position-fixed';
+        toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; max-width: 300px;';
+        toast.innerHTML = `
+            <i class="fas fa-check"></i> Article bookmarked!
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        document.body.appendChild(toast);
+        
+        setTimeout(() => {
+            if (toast.parentNode) {
+                toast.parentNode.removeChild(toast);
+            }
+        }, 3000);
+    } else {
+        alert('Article already bookmarked!');
+    }
+}
+
+// Auto-refresh functionality
+let refreshInterval = 300000; // 5 minutes default
+
+function refreshNews() {
+    location.reload();
+}
+
+// Set up auto-refresh (can be configured via admin panel)
+setTimeout(refreshNews, refreshInterval);
+</script>
+{% endblock %}
